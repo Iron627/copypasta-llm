@@ -8,3 +8,7 @@ wheels/
 
 # Virtual environments
 .venv
+
+# scraped data
+pasta.txt
+cleaned_pasta.txt
