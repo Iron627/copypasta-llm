@@ -12,16 +12,25 @@ headers = {
     'Accept-Language': 'en-US,en;q=0.5',
     'Referer': 'https://google.com'
 }
+seen = set()
+
 def scrape_page(url):
-    r = requests.get(url,headers=headers)
-    txt = r.text
-    soup = BeautifulSoup(txt,'html.parser')
+    try:
+        r = requests.get(url, headers=headers, timeout=10)
+        r.raise_for_status()
+    except Exception as e:
+        print(f"Request error {url}: {e}")
+        return
+
+    soup = BeautifulSoup(r.text, 'html.parser')
     pasta = soup.find_all('code')
-    with open('pasta.txt','a') as f:
+
+    with open('pasta.txt', 'a', encoding='utf-8') as f:
         for p in pasta:
-            f.write(p.text)
-            f.write('\n\n')
-    print(f"Scraped {url}")
+            text = p.text.strip()
+            if text not in seen:
+                seen.add(text)
+                f.write(text + "\n\n")
 for i in range(1,n):
     scrape_page(f"https://copypastatext.com/page/{i}")
     time.sleep(RATE_LIMIT)
