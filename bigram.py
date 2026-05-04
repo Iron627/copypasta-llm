@@ -6,7 +6,7 @@ with open("cleaned_pasta.txt", "r", encoding="utf-8") as f:
     data = f.read()
 vocab = sorted(list(set(data)))
 
-device = "cuda" if torch.cuda.is_available() else "xpu" if torch.xpu.is_available() else "cpu"
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
 map_s_to_i = {s: i for i, s in enumerate(vocab)}
 map_i_to_s = {i: s for i, s in enumerate(vocab)}
