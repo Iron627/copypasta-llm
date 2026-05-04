@@ -72,5 +72,5 @@ for timesteps in range(10000):
     
     
     
-start = torch.zeros((1, 1), dtype=torch.long)
+start = torch.zeros((1, 1), dtype=torch.long,device=device)
 print(decode(model.generate(start, max_out=300)[0].tolist()))
