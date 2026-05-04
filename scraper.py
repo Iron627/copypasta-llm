@@ -2,8 +2,8 @@
 import requests
 from bs4 import BeautifulSoup
 import time
-
-n = 10
+RATE_LIMIT = 5
+n = 100
 
 base_url = "https://copypastatext.com/page/1"
 headers = {
@@ -24,4 +24,4 @@ def scrape_page(url):
             
 for i in range(1,n):
     scrape_page(f"https://copypastatext.com/page/{i}")
-    time.sleep(1)
+    time.sleep(RATE_LIMIT)
