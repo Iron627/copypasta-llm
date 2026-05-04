@@ -49,6 +49,7 @@ for i in range(1, n):
                 time.sleep(RATE_LIMIT * 2)
             else:
                 print(f"Failed to scrape page {i} after {max_retries} retries, skipping...")
+                time.sleep(RATE_LIMIT)
     
     if success:
         time.sleep(RATE_LIMIT)
