@@ -20,7 +20,7 @@ def scrape_page(url):
         r.raise_for_status()
     except Exception as e:
         print(f"Request error {url}: {e}")
-        return
+        return False
 
     soup = BeautifulSoup(r.text, 'html.parser')
     pasta = soup.find_all('code')
@@ -31,7 +31,24 @@ def scrape_page(url):
             if text not in seen:
                 seen.add(text)
                 f.write(text + "\n\n")
-for i in range(1,n):
-    scrape_page(f"https://copypastatext.com/page/{i}")
-    print(f"Scraped page {i}")
-    time.sleep(RATE_LIMIT)
+    return True
+
+for i in range(1, n):
+    retries = 0
+    max_retries = 10
+    success = False
+    
+    while retries < max_retries and not success:
+        if scrape_page(f"https://copypastatext.com/page/{i}"):
+            print(f"Scraped page {i}")
+            success = True
+        else:
+            retries += 1
+            if retries < max_retries:
+                print(f"Failed to scrape page {i}, retry {retries}/{max_retries}...")
+                time.sleep(RATE_LIMIT * 2)
+            else:
+                print(f"Failed to scrape page {i} after {max_retries} retries, skipping...")
+    
+    if success:
+        time.sleep(RATE_LIMIT)
