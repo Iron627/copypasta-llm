@@ -17,8 +17,8 @@ data = torch.tensor(encode(data), dtype=torch.long)
 train_split = data[:int(0.9*len(data))]
 test_split = data[int(0.9*len(data)):]
 
-batch_size = 8
-chunk_size = 16
+batch_size = 32
+chunk_size = 64
 
 
 # depending on batch size (B) and chunk size (C) returns a random tensor of shape BxC for transformer to train on
@@ -48,10 +48,27 @@ class BigramLM(nn.Module):
         return logits, loss
     def generate(self, inputs, max_out):
         for char in range(max_out):
-            logits = self(inputs)
-            logits=  logits[:, -1, :] # only take previous char
+            logits, _ = self(inputs)
+            logits =  logits[:, -1, :] # only take previous char
             probs = F.softmax(logits, dim=-1) # convert to probabilities (activation)
             out_char = torch.multinomial(probs, num_samples=1) # sample from distribution
             inputs = torch.cat((inputs, out_char), dim=1) #catenate 
         return inputs
-            
+model = BigramLM(len(vocab))
+optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)
+
+for timesteps in range(10000):
+    xtrain, ytrain = get_chunk("train")
+    
+    logits, loss = model(xtrain, ytrain)
+    optimizer.zero_grad(set_to_none=True)
+    loss.backward()
+    optimizer.step()
+    if timesteps % 500 == 0:
+        print(f"step {timesteps}: loss {loss.item()}")
+
+    
+    
+    
+start = torch.zeros((1, 1), dtype=torch.long)
+print(decode(model.generate(start, max_out=300)[0].tolist()))

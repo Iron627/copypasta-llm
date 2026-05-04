@@ -1,15 +1,13 @@
 #human written code
-import unicodedata
-def keep(c):
-    if c.isascii():
-        return True
-    return unicodedata.category(c).startswith(('S', 'P'))
+import string
+
+allowed = set(string.ascii_lowercase + string.ascii_uppercase + " @$&*#.,!?'\n0123456789")
 
 with open('pasta.txt', 'r', encoding='utf-8') as f:
     cleaned_data = [
-        ''.join(c for c in line if keep(c))
+        ''.join(c for c in line if c in allowed)
         for line in f
-    ] 
-    print(len("\n".join(cleaned_data)))
+    ]
+
 with open('cleaned_pasta.txt', 'w', encoding='utf-8') as f:
     f.writelines(cleaned_data)
