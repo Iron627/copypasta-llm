@@ -36,14 +36,15 @@ class BigramLM(nn.Module):
         self.token_embedding_table = nn.Embedding(vocab_size, vocab_size) # LUT for token embeddings
     def forward(self, inputs, targets=None):
         logits = self.token_embedding_table(inputs) # (B, T, C)
-        
-        b, t, c = logits.shape
-        logits = logits.view(b*t,c) 
-        targets = targets.view(b*t) 
-        
-        loss  = F.cross_entropy(logits, targets)
         if targets is None:
             loss = None
+        else:
+            b, t, c = logits.shape
+            logits = logits.view(b*t,c) 
+            targets = targets.view(b*t) 
+            
+            loss  = F.cross_entropy(logits, targets)
+        
         return logits, loss
     def generate(self, inputs, max_out):
         for char in range(max_out):
@@ -51,6 +52,6 @@ class BigramLM(nn.Module):
             logits=  logits[:, -1, :] # only take previous char
             probs = F.softmax(logits, dim=-1) # convert to probabilities (activation)
             out_char = torch.multinomial(probs, num_samples=1) # sample from distribution
-            inputs = torch.cat((inputs, out_char), dim=1) # append to input
+            inputs = torch.cat((inputs, out_char), dim=1) #catenate 
         return inputs
             
