@@ -30,6 +30,26 @@ def get_chunk(split):
     y = torch.stack([data[pos+1:pos+chunk_size+1] for pos in starting_positions])
     return x.to(device), y.to(device)
 
+@torch.no_grad()
+def estimate_loss():
+    model.eval()
+
+    losses = {"train": 0.0, "test": 0.0}
+    eval_iters = 100
+
+    for split in ["train", "test"]:
+        total_loss = 0.0
+
+        for _ in range(eval_iters):
+            xb, yb = get_chunk(split)
+            _, loss = model(xb, yb)
+            total_loss += loss.item()
+
+        losses[split] = total_loss / eval_iters
+
+    model.train()
+    return losses
+
 
 class BigramLM(nn.Module):
     def __init__(self,vocab_size):
@@ -67,7 +87,8 @@ for timesteps in range(10000):
     loss.backward()
     optimizer.step()
     if timesteps % 500 == 0:
-        print(f"step {timesteps}: loss {loss.item()}")
+        losses = estimate_loss()
+        print(f"step {timesteps}: train {losses['train']:.4f}, test {losses['test']:.4f}")
 
     
     
