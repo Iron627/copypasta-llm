@@ -3,7 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import time
 RATE_LIMIT = 5
-n = 100
+n = 1000
 
 base_url = "https://copypastatext.com/page/1"
 headers = {
