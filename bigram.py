@@ -6,6 +6,7 @@ with open("cleaned_pasta.txt", "r", encoding="utf-8") as f:
     data = f.read()
 vocab = sorted(list(set(data)))
 
+device = "cuda" if torch.cuda.is_available() else "xpu" if torch.xpu.is_available() else "cpu"
 
 map_s_to_i = {s: i for i, s in enumerate(vocab)}
 map_i_to_s = {i: s for i, s in enumerate(vocab)}
@@ -27,7 +28,7 @@ def get_chunk(split):
     starting_positions = torch.randint(0, len(data) - chunk_size, (batch_size,))
     x = torch.stack([data[pos:pos+chunk_size] for pos in starting_positions])
     y = torch.stack([data[pos+1:pos+chunk_size+1] for pos in starting_positions])
-    return x, y
+    return x.to(device), y.to(device)
 
 
 class BigramLM(nn.Module):
@@ -55,6 +56,7 @@ class BigramLM(nn.Module):
             inputs = torch.cat((inputs, out_char), dim=1) #catenate 
         return inputs
 model = BigramLM(len(vocab))
+model = model.to(device)
 optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)
 
 for timesteps in range(10000):
