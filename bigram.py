@@ -17,7 +17,7 @@ data = torch.tensor(encode(data), dtype=torch.long)
 train_split = data[:int(0.9*len(data))]
 test_split = data[int(0.9*len(data)):]
 
-batch_size = 32
+batch_size = 256
 chunk_size = 64
 
 
