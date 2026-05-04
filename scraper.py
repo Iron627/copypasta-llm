@@ -21,7 +21,7 @@ def scrape_page(url):
         for p in pasta:
             f.write(p.text)
             f.write('\n\n')
-            
+    print(f"Scraped {url}")
 for i in range(1,n):
     scrape_page(f"https://copypastatext.com/page/{i}")
     time.sleep(RATE_LIMIT)
