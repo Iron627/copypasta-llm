@@ -33,4 +33,5 @@ def scrape_page(url):
                 f.write(text + "\n\n")
 for i in range(1,n):
     scrape_page(f"https://copypastatext.com/page/{i}")
+    print(f"Scraped page {i}")
     time.sleep(RATE_LIMIT)
