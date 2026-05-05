@@ -12,3 +12,6 @@ wheels/
 # scraped data
 pasta.txt
 cleaned_pasta.txt
+
+# checkpoints
+ngram_checkpoint.pt
