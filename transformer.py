@@ -1,27 +1,27 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+import tiktoken
 
 with open("cleaned_pasta.txt", "r", encoding="utf-8") as f:
     text = f.read()
 
-vocab = sorted(list(set(text)))
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-map_s_to_i = {s: i for i, s in enumerate(vocab)}
-map_i_to_s = {i: s for i, s in enumerate(vocab)}
+enc = tiktoken.get_encoding("gpt2")
 
-encode = lambda s: [map_s_to_i[c] for c in s]
-decode = lambda ids: "".join([map_i_to_s[i] for i in ids])
+encode = lambda s: enc.encode(s)
+decode = lambda ids: enc.decode(ids)
+
+vocab_size = enc.n_vocab
 
 data = torch.tensor(encode(text), dtype=torch.long, device=device)
 
 train_split = data[:int(0.9 * len(data))]
 test_split = data[int(0.9 * len(data)):]
 
-batch_size = 64
-chunk_size = 256
+batch_size = 32
+chunk_size = 64
 
 
 def get_chunk(split):
@@ -31,7 +31,6 @@ def get_chunk(split):
 
     x = source[ix[:, None] + offsets[None, :]]
     y = source[ix[:, None] + offsets[None, :] + 1]
-
     return x, y
 
 
@@ -44,7 +43,7 @@ class Block(nn.Module):
         self.ln2 = nn.LayerNorm(n_embd)
         self.ff = nn.Sequential(
             nn.Linear(n_embd, 4 * n_embd),
-            nn.ReLU(),
+            nn.GELU(),
             nn.Linear(4 * n_embd, n_embd),
         )
 
@@ -52,23 +51,19 @@ class Block(nn.Module):
         norm_x = self.ln1(x)
         attn_out, _ = self.attn(norm_x, norm_x, norm_x, attn_mask=mask)
         x = x + attn_out
-
         x = x + self.ff(self.ln2(x))
         return x
 
 
 class transformerLM(nn.Module):
-    def __init__(self, vocab_size, n_embd=128, chunk_size=128, n_layer=4):
+    def __init__(self, vocab_size, n_embd=256, chunk_size=64, n_layer=6):
         super().__init__()
-
         self.chunk_size = chunk_size
 
         self.token_embedding_table = nn.Embedding(vocab_size, n_embd)
         self.position_embedding_table = nn.Embedding(chunk_size, n_embd)
 
-        self.blocks = nn.ModuleList([
-            Block(n_embd) for _ in range(n_layer)
-        ])
+        self.blocks = nn.ModuleList([Block(n_embd) for _ in range(n_layer)])
 
         self.ln_f = nn.LayerNorm(n_embd)
         self.lm_head = nn.Linear(n_embd, vocab_size)
@@ -103,35 +98,32 @@ class transformerLM(nn.Module):
         return logits, loss
 
     @torch.no_grad()
-    def generate(self, inputs, max_out, temp=0.8):
+    def generate(self, inputs, max_out, temp=0.8, top_k=50):
         for _ in range(max_out):
             inputs_cond = inputs[:, -self.chunk_size:]
 
             logits, _ = self(inputs_cond)
             logits = logits[:, -1, :]
+            logits = logits / max(temp, 1e-6)
 
-            logits = logits / temp
-
-            
-            top_k = min(50, logits.size(-1))
+            top_k = min(top_k, logits.size(-1))
             v, ix = torch.topk(logits, top_k)
 
-            probs = torch.zeros_like(logits).scatter_(
-                1, ix, F.softmax(v, dim=-1)
-            )
+            probs = F.softmax(v, dim=-1)
+            sampled = torch.multinomial(probs, num_samples=1)
+            out_token = ix.gather(1, sampled)
 
-            out_char = torch.multinomial(probs, num_samples=1)
-            inputs = torch.cat((inputs, out_char), dim=1)
+            inputs = torch.cat((inputs, out_token), dim=1)
 
         return inputs
 
 
 @torch.no_grad()
-def estimate_loss():
+def estimate_loss(model):
     model.eval()
 
     losses = {"train": 0.0, "test": 0.0}
-    eval_iters = 5
+    eval_iters = 3
 
     for split in ["train", "test"]:
         total_loss = 0.0
@@ -149,13 +141,15 @@ def estimate_loss():
 
 if __name__ == "__main__":
     model = transformerLM(
-        len(vocab),
-        n_embd=384,
+        vocab_size,
+        n_embd=256,
         chunk_size=chunk_size,
-        n_layer=8
+        n_layer=6
     ).to(device)
 
-    optimizer = torch.optim.AdamW(model.parameters(), lr=3e-4)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=3e-4, weight_decay=0.1)
+
+    print(sum(p.numel() for p in model.parameters()) / 1e6, "M parameters")
 
     for timesteps in range(50000):
         xtrain, ytrain = get_chunk("train")
@@ -166,18 +160,29 @@ if __name__ == "__main__":
         loss.backward()
         optimizer.step()
 
-        if timesteps % 2000 == 0:
-            losses = estimate_loss()
+        if timesteps % 1000 == 0:
+            print("step", timesteps)
+
+        if timesteps % 5000 == 0:
+            losses = estimate_loss(model)
             print(f"step {timesteps}: train {losses['train']:.4f}, test {losses['test']:.4f}")
-            print(sum(p.numel() for p in model.parameters()) / 1e6, "M parameters")
+
+        if timesteps % 10000 == 0 and timesteps > 0:
+            torch.save({
+                "model_state": model.state_dict(),
+                "vocab_size": vocab_size,
+                "n_embd": 256,
+                "chunk_size": chunk_size,
+                "n_layer": 6,
+            }, f"transformer_checkpoint_{timesteps}.pt")
 
     torch.save({
         "model_state": model.state_dict(),
-        "vocab": vocab,
-        "n_embd": 384,
+        "vocab_size": vocab_size,
+        "n_embd": 256,
         "chunk_size": chunk_size,
-        "n_layer": 8,
+        "n_layer": 6,
     }, "transformer_checkpoint.pt")
 
-    start = torch.zeros((1, 1), dtype=torch.long, device=device)
-    print(decode(model.generate(start, max_out=300)[0].tolist()))
+    start = torch.tensor([[enc.eot_token]], dtype=torch.long, device=device)
+    print(decode(model.generate(start, max_out=150, temp=0.8, top_k=50)[0].tolist()))
