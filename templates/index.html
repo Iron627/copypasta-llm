@@ -6,7 +6,7 @@
     <title>Copypasta LLM</title>
     <meta
       name="description"
-      content="A polished local chat interface for a small transformer model."
+      content="Talk to whatever this mess is."
     />
     <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}" />
     <script defer src="{{ url_for('static', filename='app.js') }}"></script>
@@ -18,11 +18,10 @@
     <main class="shell">
       <section class="hero">
         <div>
-          <p class="eyebrow">Local model • 15,000-step checkpoint</p>
+          <p class="eyebrow">Absolute Cinema • Existential crisis</p>
           <h1>Copypasta LLM</h1>
           <p class="lede">
-            A tactile chat surface for your local transformer: fast to tweak,
-            easy to read, and designed for iterative prompts.
+            A chat interface for the finest bullshit on the internet, trained on a thousand pages of copypasta.
           </p>
         </div>
 
@@ -72,26 +71,21 @@
             <button type="button" class="preset" data-temp="0.25" data-topk="15" data-max="60">Deterministic</button>
           </div>
 
-          <div class="hint">
-            <strong>Tip:</strong> Lower temperature sharpens output; higher top-k
-            broadens sampling.
-          </div>
+          
         </aside>
 
         <section class="chat card">
           <div class="chat-head">
             <div>
               <h2>Chat</h2>
-              <p>Ask, refine, and keep the conversation moving.</p>
+              <p>Send messages. I can't guarantee a coherent response.</p>
             </div>
             <button id="clearChat" type="button" class="ghost">Clear</button>
           </div>
 
           <div class="messages" id="messages" aria-live="polite" aria-busy="false">
             <article class="message assistant">
-              <div class="bubble">
-                <p>Ready when you are. Try a short prompt or ask for something weird.</p>
-              </div>
+              
             </article>
           </div>
 

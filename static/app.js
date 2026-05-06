@@ -182,7 +182,6 @@ els.clearChat.addEventListener("click", () => {
   if (state.busy) return;
   state.messages = [];
   els.messages.innerHTML = "";
-  renderMessage("assistant", "Ready when you are. Try a short prompt or ask for something weird.");
   setError("");
 });
 
