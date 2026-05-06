@@ -1,10 +1,35 @@
+import os
 import torch
 import tiktoken
 from transformer import transformerLM
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-checkpoint = torch.load("transformer_checkpoint_15000.pt", map_location=device)
+pt_files = sorted([f for f in os.listdir(".") if f.endswith(".pt")])
+
+if not pt_files:
+    raise FileNotFoundError("No .pt checkpoint files found in this folder.")
+
+print("Available models:\n")
+for i, file in enumerate(pt_files):
+    print(f"{i}: {file}")
+
+while True:
+    choice = input("\nChoose model number: ")
+
+    try:
+        choice = int(choice)
+        if 0 <= choice < len(pt_files):
+            break
+    except ValueError:
+        pass
+
+    print("Invalid choice.")
+
+checkpoint_path = pt_files[choice]
+print(f"\nLoading {checkpoint_path}...\n")
+
+checkpoint = torch.load(checkpoint_path, map_location=device)
 
 enc = tiktoken.get_encoding("gpt2")
 vocab_size = enc.n_vocab
@@ -22,7 +47,55 @@ model = transformerLM(
 model.load_state_dict(checkpoint["model_state"])
 model.eval()
 
-print("Type something (or 'exit'):\n")
+while True:
+    temp_input = input("Temperature? recommended 0.5-0.8 [default 0.7]: ").strip()
+
+    if temp_input == "":
+        temp = 0.7
+        break
+
+    try:
+        temp = float(temp_input)
+        if temp > 0:
+            break
+    except ValueError:
+        pass
+
+    print("Invalid temperature.")
+
+while True:
+    top_k_input = input("Top-k? recommended 20-50 [default 50]: ").strip()
+
+    if top_k_input == "":
+        top_k = 50
+        break
+
+    try:
+        top_k = int(top_k_input)
+        if top_k > 0:
+            break
+    except ValueError:
+        pass
+
+    print("Invalid top-k.")
+
+while True:
+    max_out_input = input("Max output tokens? [default 100]: ").strip()
+
+    if max_out_input == "":
+        max_out = 100
+        break
+
+    try:
+        max_out = int(max_out_input)
+        if max_out > 0:
+            break
+    except ValueError:
+        pass
+
+    print("Invalid max output.")
+
+print("\nType something (or 'exit'):\n")
 
 while True:
     user_input = input("You: ")
@@ -37,7 +110,7 @@ while True:
 
     start = torch.tensor([start_ids], dtype=torch.long, device=device)
 
-    out = model.generate(start, max_out=100, temp=0.7, top_k=50)
+    out = model.generate(start, max_out=max_out, temp=temp, top_k=top_k)
     text = decode(out[0].tolist())
 
     print("Model:", text[len(user_input):])

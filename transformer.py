@@ -3,9 +3,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 import tiktoken
 
-with open("cleaned_pasta.txt", "r", encoding="utf-8") as f:
-    text = f.read()
-
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 enc = tiktoken.get_encoding("gpt2")
@@ -15,17 +12,32 @@ decode = lambda ids: enc.decode(ids)
 
 vocab_size = enc.n_vocab
 
-data = torch.tensor(encode(text), dtype=torch.long, device=device)
-
-train_split = data[:int(0.9 * len(data))]
-test_split = data[int(0.9 * len(data)):]
-
 batch_size = 32
 chunk_size = 64
 
+train_split = None
+test_split = None
+
+
+def load_dataset(path="cleaned_pasta.txt"):
+    global train_split, test_split
+
+    if train_split is not None and test_split is not None:
+        return train_split, test_split
+
+    with open(path, "r", encoding="utf-8") as f:
+        text = f.read()
+
+    data = torch.tensor(encode(text), dtype=torch.long, device=device)
+    train_split = data[:int(0.9 * len(data))]
+    test_split = data[int(0.9 * len(data)):]
+
+    return train_split, test_split
+
 
 def get_chunk(split):
-    source = train_split if split == "train" else test_split
+    train_data, test_data = load_dataset()
+    source = train_data if split == "train" else test_data
     ix = torch.randint(len(source) - chunk_size - 1, (batch_size,), device=device)
     offsets = torch.arange(chunk_size, device=device)
 

@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Copypasta LLM</title>
+    <meta
+      name="description"
+      content="A polished local chat interface for a small transformer model."
+    />
+    <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}" />
+    <script defer src="{{ url_for('static', filename='app.js') }}"></script>
+  </head>
+  <body>
+    <div class="bg-orb orb-a"></div>
+    <div class="bg-orb orb-b"></div>
+
+    <main class="shell">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Local model • 15,000-step checkpoint</p>
+          <h1>Copypasta LLM</h1>
+          <p class="lede">
+            A tactile chat surface for your local transformer: fast to tweak,
+            easy to read, and designed for iterative prompts.
+          </p>
+        </div>
+
+        <div class="status-panel">
+          <div class="status-row">
+            <span class="status-dot" id="statusDot"></span>
+            <div>
+              <div class="status-label">Model status</div>
+              <div class="status-value" id="modelStatus">Ready</div>
+            </div>
+          </div>
+          <div class="status-meta">
+            <span id="endpointLabel">POST /api/chat</span>
+            <span id="connectionLabel">Idle</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="workspace">
+        <aside class="controls card">
+          <div class="card-head">
+            <h2>Generation</h2>
+            <span class="chip">Controls</span>
+          </div>
+
+          <label>
+            <span>Temperature</span>
+            <div class="range-row">
+              <input id="temperature" type="range" min="0.1" max="1.5" step="0.05" value="0.7" />
+              <output id="temperatureValue">0.7</output>
+            </div>
+          </label>
+
+          <label>
+            <span>Top-k</span>
+            <input id="topK" type="number" min="1" max="200" step="1" value="50" />
+          </label>
+
+          <label>
+            <span>Max tokens</span>
+            <input id="maxTokens" type="number" min="1" max="1024" step="1" value="100" />
+          </label>
+
+          <div class="preset-grid">
+            <button type="button" class="preset" data-temp="0.45" data-topk="30" data-max="80">Balanced</button>
+            <button type="button" class="preset" data-temp="0.8" data-topk="50" data-max="120">Creative</button>
+            <button type="button" class="preset" data-temp="0.25" data-topk="15" data-max="60">Deterministic</button>
+          </div>
+
+          <div class="hint">
+            <strong>Tip:</strong> Lower temperature sharpens output; higher top-k
+            broadens sampling.
+          </div>
+        </aside>
+
+        <section class="chat card">
+          <div class="chat-head">
+            <div>
+              <h2>Chat</h2>
+              <p>Ask, refine, and keep the conversation moving.</p>
+            </div>
+            <button id="clearChat" type="button" class="ghost">Clear</button>
+          </div>
+
+          <div class="messages" id="messages" aria-live="polite" aria-busy="false">
+            <article class="message assistant">
+              <div class="bubble">
+                <p>Ready when you are. Try a short prompt or ask for something weird.</p>
+              </div>
+            </article>
+          </div>
+
+          <form id="chatForm" class="composer">
+            <label class="sr-only" for="prompt">Message</label>
+            <textarea
+              id="prompt"
+              rows="1"
+              placeholder="Type a message..."
+              autocomplete="off"
+              spellcheck="true"
+            ></textarea>
+            <button id="sendButton" type="submit">Send</button>
+          </form>
+
+          <div class="footer-row">
+            <span id="errorText" class="error" role="status" aria-live="assertive"></span>
+            <span id="tokenHint">Enter to send • Shift+Enter for newline</span>
+          </div>
+        </section>
+      </section>
+    </main>
+  </body>
+</html>
