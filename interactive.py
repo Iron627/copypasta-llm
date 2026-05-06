@@ -1,23 +1,23 @@
 import torch
-from ngram import nGramLM
+from transformer import transformerLM
 
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-checkpoint = torch.load("ngram_checkpoint.pt", map_location=device)
+checkpoint = torch.load("transformer_checkpoint.pt", map_location=device)
 
 vocab = checkpoint["vocab"]
 map_s_to_i = {s: i for i, s in enumerate(vocab)}
 map_i_to_s = {i: s for i, s in enumerate(vocab)}
 
 encode = lambda s: [map_s_to_i[c] for c in s]
-decode = lambda i: "".join([map_i_to_s[i] for i in i])
+decode = lambda ids: "".join([map_i_to_s[i] for i in ids])
 
-model = nGramLM(
+model = transformerLM(
     len(vocab),
     n_embd=checkpoint["n_embd"],
-    n=checkpoint["n"],
-    chunk_size=checkpoint["chunk_size"]
+    chunk_size=checkpoint["chunk_size"],
+    n_layer=checkpoint["n_layer"]
 ).to(device)
 
 model.load_state_dict(checkpoint["model_state"])
