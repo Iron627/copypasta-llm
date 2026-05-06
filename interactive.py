@@ -1,20 +1,19 @@
 import torch
+import tiktoken
 from transformer import transformerLM
-
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-checkpoint = torch.load("transformer_checkpoint.pt", map_location=device)
+checkpoint = torch.load("transformer_checkpoint_15000.pt", map_location=device)
 
-vocab = checkpoint["vocab"]
-map_s_to_i = {s: i for i, s in enumerate(vocab)}
-map_i_to_s = {i: s for i, s in enumerate(vocab)}
+enc = tiktoken.get_encoding("gpt2")
+vocab_size = enc.n_vocab
 
-encode = lambda s: [map_s_to_i[c] for c in s]
-decode = lambda ids: "".join([map_i_to_s[i] for i in ids])
+encode = lambda s: enc.encode(s)
+decode = lambda ids: enc.decode(ids)
 
 model = transformerLM(
-    len(vocab),
+    vocab_size,
     n_embd=checkpoint["n_embd"],
     chunk_size=checkpoint["chunk_size"],
     n_layer=checkpoint["n_layer"]
@@ -31,13 +30,14 @@ while True:
     if user_input.lower() in ["exit", "quit"]:
         break
 
-    try:
-        start = torch.tensor([encode(user_input)], dtype=torch.long, device=device)
-    except KeyError:
-        print("contains unknown characters")
-        continue
+    start_ids = encode(user_input)
 
-    out = model.generate(start, max_out=200)
+    if len(start_ids) == 0:
+        start_ids = [enc.eot_token]
+
+    start = torch.tensor([start_ids], dtype=torch.long, device=device)
+
+    out = model.generate(start, max_out=100, temp=0.7, top_k=50)
     text = decode(out[0].tolist())
 
     print("Model:", text[len(user_input):])

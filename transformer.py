@@ -39,7 +39,7 @@ class Block(nn.Module):
         super().__init__()
         self.ln1 = nn.LayerNorm(n_embd)
         self.attn = nn.MultiheadAttention(n_embd, num_heads=num_heads, batch_first=True)
-
+        self.dropout = nn.Dropout(0.2)
         self.ln2 = nn.LayerNorm(n_embd)
         self.ff = nn.Sequential(
             nn.Linear(n_embd, 4 * n_embd),
@@ -49,11 +49,17 @@ class Block(nn.Module):
 
     def forward(self, x, mask):
         norm_x = self.ln1(x)
-        attn_out, _ = self.attn(norm_x, norm_x, norm_x, attn_mask=mask)
-        x = x + attn_out
-        x = x + self.ff(self.ln2(x))
-        return x
 
+        attn_out, _ = self.attn(
+            norm_x, norm_x, norm_x,
+            attn_mask=mask
+        )
+        x = x + self.dropout(attn_out)
+
+        ff_out = self.ff(self.ln2(x))
+        x = x + self.dropout(ff_out)
+
+        return x
 
 class transformerLM(nn.Module):
     def __init__(self, vocab_size, n_embd=256, chunk_size=64, n_layer=6):

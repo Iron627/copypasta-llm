@@ -15,3 +15,4 @@ cleaned_pasta.txt
 
 # checkpoints
 ngram_checkpoint.pt
+*.pt
