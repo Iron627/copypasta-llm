@@ -95,11 +95,11 @@ h1 {
 .controls { display: grid; gap: 16px; align-content: start; }
 label { display: grid; gap: 8px; font-size: 0.92rem; }
 label > span { color: var(--muted); }
-input[type="number"], textarea {
+input[type="number"], select, textarea {
   width: 100%; background: rgba(255,255,255,0.04); color: var(--text);
   border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; outline: none;
 }
-input[type="number"]:focus, textarea:focus, .ghost:focus, #sendButton:focus, .preset:focus {
+input[type="number"]:focus, select:focus, textarea:focus, .ghost:focus, #sendButton:focus, .preset:focus {
   border-color: rgba(255, 184, 107, 0.7);
   box-shadow: 0 0 0 4px rgba(255, 184, 107, 0.12);
 }

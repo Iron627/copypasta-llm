@@ -1,4 +1,4 @@
-const els = {
+﻿const els = {
   messages: document.getElementById("messages"),
   form: document.getElementById("chatForm"),
   prompt: document.getElementById("prompt"),
@@ -7,6 +7,7 @@ const els = {
   errorText: document.getElementById("errorText"),
   temperature: document.getElementById("temperature"),
   temperatureValue: document.getElementById("temperatureValue"),
+  modelSelect: document.getElementById("modelSelect"),
   topK: document.getElementById("topK"),
   maxTokens: document.getElementById("maxTokens"),
   modelStatus: document.getElementById("modelStatus"),
@@ -50,7 +51,7 @@ function renderMessage(role, content, extraClass = "") {
   return article;
 }
 
-function setBusy(busy, label = busy ? "Generating…" : "Ready") {
+function setBusy(busy, label = busy ? "Generating..." : "Ready") {
   state.busy = busy;
   els.sendButton.disabled = busy;
   els.prompt.disabled = busy;
@@ -68,7 +69,10 @@ function setError(message = "") {
 }
 
 function syncControls() {
-  els.temperatureValue.textContent = Number(els.temperature.value).toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
+  els.temperatureValue.textContent = Number(els.temperature.value)
+    .toFixed(2)
+    .replace(/0+$/, "")
+    .replace(/\.$/, "");
 }
 
 function buildPayload() {
@@ -79,6 +83,7 @@ function buildPayload() {
     top_k: Number(els.topK.value),
     max_tokens: Number(els.maxTokens.value),
     max_out: Number(els.maxTokens.value),
+    model: els.modelSelect.value,
     history: state.messages.map(({ role, content }) => ({ role, content })),
     messages: state.messages.map(({ role, content }) => ({ role, content })),
   };
@@ -101,7 +106,7 @@ function normalizeReply(data) {
 async function sendMessage(text) {
   state.messages.push({ role: "user", content: text });
   renderMessage("user", text);
-  const pending = renderMessage("assistant", "Thinking…");
+  const pending = renderMessage("assistant", "Thinking...");
 
   setBusy(true);
   setError("");
@@ -115,7 +120,9 @@ async function sendMessage(text) {
 
     const raw = await response.text();
     let data = raw;
-    try { data = JSON.parse(raw); } catch (_) {}
+    try {
+      data = JSON.parse(raw);
+    } catch (_) {}
 
     if (!response.ok) {
       throw new Error(normalizeReply(data) || `Request failed (${response.status})`);
@@ -135,6 +142,29 @@ async function sendMessage(text) {
   }
 }
 
+function renderModelOptions(models = [], selected = "") {
+  els.modelSelect.innerHTML = "";
+
+  if (!models.length) {
+    const option = document.createElement("option");
+    option.value = "";
+    option.textContent = "No .pt files found";
+    els.modelSelect.appendChild(option);
+    els.modelSelect.disabled = true;
+    return;
+  }
+
+  models.forEach((path) => {
+    const option = document.createElement("option");
+    option.value = path;
+    option.textContent = path;
+    if (path === selected) option.selected = true;
+    els.modelSelect.appendChild(option);
+  });
+
+  els.modelSelect.disabled = false;
+}
+
 async function loadStatus() {
   try {
     const response = await fetch("/api/status");
@@ -145,14 +175,16 @@ async function loadStatus() {
     }
 
     const step = data.model?.step ? `${data.model.step.toLocaleString()} steps` : "checkpoint";
-    const device = data.model?.device ? ` • ${data.model.device}` : "";
+    const device = data.model?.device ? ` - ${data.model.device}` : "";
     els.modelStatus.textContent = `${step}${device}`;
     els.connectionLabel.textContent = "Ready";
+    renderModelOptions(data.models || [], data.model?.checkpoint || "");
   } catch (err) {
     els.modelStatus.textContent = "Backend offline";
     els.connectionLabel.textContent = "Check server";
     els.statusDot.style.background = "#ef4444";
     els.statusDot.style.boxShadow = "0 0 0 6px rgba(239, 68, 68, 0.12)";
+    renderModelOptions([], "");
     setError(err?.message || "Unable to load model status.");
   }
 }

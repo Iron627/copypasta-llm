@@ -1,15 +1,27 @@
 [project]
 name = "copypasta-llm"
 version = "0.1.0"
-description = "Add your description here"
+description = "tiny transformer trained on internet copypastas"
 readme = "README.md"
 requires-python = ">=3.12"
+
 dependencies = [
-    "bs4>=0.0.2",
+    "beautifulsoup4>=4.12.0",
     "flask>=3.1.0",
-    "numpy>=2.4.4",
-    "requests>=2.33.1",
-    "tiktoken>=0.12.0",
-    "tokenizers>=0.23.1",
-    "torch>=2.11.0",
+    "numpy>=2.0.0",
+    "requests>=2.32.0",
+    "sentencepiece>=0.2.1",
+    "tokenizers>=0.20.0",
+    "torch>=2.5.1",
+    "torchaudio>=2.5.1",
+    "torchvision>=0.20.1",
 ]
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu121" }
+torchvision = { index = "pytorch-cu121" }
+torchaudio = { index = "pytorch-cu121" }
+
+[[tool.uv.index]]
+name = "pytorch-cu121"
+url = "https://download.pytorch.org/whl/cu121"

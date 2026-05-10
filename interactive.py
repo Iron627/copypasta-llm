@@ -1,7 +1,6 @@
 import os
 import torch
-import tiktoken
-from transformer import transformerLM
+from transformer import decode, encode, non_empty_ids, transformerLM, vocab_size
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -30,12 +29,6 @@ checkpoint_path = pt_files[choice]
 print(f"\nLoading {checkpoint_path}...\n")
 
 checkpoint = torch.load(checkpoint_path, map_location=device)
-
-enc = tiktoken.get_encoding("gpt2")
-vocab_size = enc.n_vocab
-
-encode = lambda s: enc.encode(s)
-decode = lambda ids: enc.decode(ids)
 
 model = transformerLM(
     vocab_size,
@@ -106,7 +99,7 @@ while True:
     start_ids = encode(user_input)
 
     if len(start_ids) == 0:
-        start_ids = [enc.eot_token]
+        start_ids = non_empty_ids(user_input)
 
     start = torch.tensor([start_ids], dtype=torch.long, device=device)
 

@@ -1,21 +1,29 @@
-from tokenizers import Tokenizer
-from tokenizers.models import BPE
-from tokenizers.trainers import BpeTrainer
-from tokenizers.pre_tokenizers import ByteLevel
+import os
 
-tokenizer = Tokenizer(BPE())
+import sentencepiece as spm
 
-tokenizer.pre_tokenizer = ByteLevel()
+# Edit these if needed.
+INPUT_FILE = "cleaned_pasta.txt"
+MODEL_PREFIX = "tokenizer"
+VOCAB_SIZE = 8000
+MODEL_TYPE = "bpe"
+CHARACTER_COVERAGE = 1.0
 
-trainer = BpeTrainer(
-    vocab_size=8000,
-)
 
-tokenizer.train(
-    ["cleaned_pasta.txt"],
-    trainer
-)
+def main():
+    if not os.path.exists(INPUT_FILE):
+        raise FileNotFoundError(f"Input file not found: {INPUT_FILE}")
 
-tokenizer.save("tokenizer.json")
+    spm.SentencePieceTrainer.Train(
+        input=INPUT_FILE,
+        model_prefix=MODEL_PREFIX,
+        vocab_size=VOCAB_SIZE,
+        model_type=MODEL_TYPE,
+        character_coverage=CHARACTER_COVERAGE,
+    )
 
-print("done")
+    print(f"done: wrote {MODEL_PREFIX}.model and {MODEL_PREFIX}.vocab")
+
+
+if __name__ == "__main__":
+    main()
