@@ -26,13 +26,13 @@ vocab_size = tokenizer.get_vocab_size()
 # =========================
 
 batch_size = 16
-chunk_size = 256
+chunk_size = 128
 
-n_embd = 512
-n_layer = 8
+n_embd = 256
+n_layer = 6
 num_heads = 8
 
-dropout = 0.2
+dropout = 0.1
 
 train_split = None
 test_split = None
@@ -166,9 +166,9 @@ class transformerLM(nn.Module):
     def __init__(
         self,
         vocab_size,
-        n_embd=512,
-        chunk_size=256,
-        n_layer=8
+        n_embd=256,
+        chunk_size=128,
+        n_layer=6
     ):
         super().__init__()
 
@@ -385,7 +385,7 @@ if __name__ == "__main__":
     # GENERATION
     # =========================
 
-    start_text = "<|user|> hello\n<|assistant|>"
+    start_text = ""
 
     start = torch.tensor(
         [encode(start_text)],

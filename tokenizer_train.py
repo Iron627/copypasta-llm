@@ -8,7 +8,7 @@ tokenizer = Tokenizer(BPE())
 tokenizer.pre_tokenizer = ByteLevel()
 
 trainer = BpeTrainer(
-    vocab_size=16000,
+    vocab_size=8000,
 )
 
 tokenizer.train(
